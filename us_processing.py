@@ -3,20 +3,13 @@
 
 =====================================================
 
-Version 7:
-- **Gait Detection:** Implements a low-pass filter and statistically
-  robust peak detection thresholds (height, prominence) to eliminate false
+- **Gait Detection:** Implements a low-pass filter and peak detection thresholds (height, prominence) to eliminate false
   positives caused by noise.
-- **Debugging Plot:** Automatically generates a diagnostic plot for each
+- **Plot:** plot for each
   trial, showing the raw vs. filtered signal and the thresholds used for peak
-  detection, allowing for easy parameter tuning.
-- **** All new gait detection parameters
-- **Batch Processing:** Automatically processes all trial folders in a project.
+  detection.
 - **Reusable ROI:** Select the ROI once for the entire batch run.
 - **Cross-Trial Analysis:** Models cumulative fatigue across an entire session.
-
-
-Date:
 
 """
 import cv2
@@ -25,16 +18,14 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 from pathlib import Path
-from scipy.signal import find_peaks, butter, filtfilt  # ### MODIFIED ###: Imported butter and filtfilt
+from scipy.signal import find_peaks, butter, filtfilt 
 import sys
 import time
 import re
 
 
 class UltrasoundTrialAnalyzer:
-    """
-    A class to encapsulate all analysis steps for a single ultrasound trial.
-    """
+    
 
     def __init__(self, trial_path: Path, config: dict):
         """
@@ -71,7 +62,7 @@ class UltrasoundTrialAnalyzer:
         return roi
 
     def process_images(self, roi: tuple):
-        """Processes all images in the trial folder to extract time-series data."""
+        """Processes all images to extract time-series data."""
         image_files = sorted(self.trial_path.glob('*.jpg'), key=lambda p: int(re.search(r'(\d+)', p.name).group(1)))
 
         if not image_files:
@@ -104,7 +95,7 @@ class UltrasoundTrialAnalyzer:
         return True
 
     def _calculate_muscle_thickness(self, roi_image: np.ndarray) -> float:
-        """Calculates vertical muscle thickness from a cropped ROI image."""
+        """Calculates vertical muscle thickness from an ROI image."""
         blurred_img = cv2.GaussianBlur(roi_image, (5, 5), 0)
         edges = cv2.Canny(blurred_img, 50, 150)
         width = edges.shape[1]
@@ -118,7 +109,7 @@ class UltrasoundTrialAnalyzer:
     # ### MODIFIED ###: gait detection function
     def identify_gait_events(self):
         """
-        Identifies gait events using a robust, filtered peak detection method.
+        Identifies gait events using a peak detection.
         """
         signal_col = self.config['gait_detection_signal']
         raw_signal = self.results_df[signal_col].values
@@ -136,7 +127,7 @@ class UltrasoundTrialAnalyzer:
         b, a = butter(2, cutoff / nyquist, btype='low', analog=False)
         filtered_signal = filtfilt(b, a, raw_signal)
 
-        # 2. Calculate robust peak detection parameters based on the *filtered* signal
+        # 2. Calculate  peak detection parameters based on the *filtered* signal
         signal_mean = np.nanmean(filtered_signal)
         signal_std = np.nanstd(filtered_signal)
 
@@ -172,11 +163,9 @@ class UltrasoundTrialAnalyzer:
             sampling_rate
         )
 
-    # A plotting function for debugging gait detection
+    # plotting gait detection
     def _plot_gait_detection_debug(self, raw_signal, filtered_signal, peaks, height_thresh, prominence_thresh, fs):
         """
-        Generates a plot to visualize the gait detection process, which is
-        essential for tuning parameters.
         """
         plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(figsize=(18, 8))
@@ -194,7 +183,6 @@ class UltrasoundTrialAnalyzer:
         ax.axhline(y=height_thresh, color='green', linestyle='--', linewidth=1.5,
                    label=f'Min Height Threshold: {height_thresh:.2f}')
 
-        # Add a text box explaining the parameters used
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         param_text = (
             f"Parameters:\n"
@@ -220,7 +208,7 @@ class UltrasoundTrialAnalyzer:
         print(f"Gait detection debug plot saved to: {save_path.name}")
 
     def run_fatigue_analysis(self):
-        """Calculates fatigue metrics and generates all plots and data files."""
+        """Calculates fatigue metrics"""
         swing_events = self.results_df[self.results_df['gait_event'] == 'Swing'].copy()
 
         self._plot_time_series('thickness_mm', 'Muscle Thickness Over Time', 'Thickness (mm)')
@@ -231,10 +219,8 @@ class UltrasoundTrialAnalyzer:
         self.results_df.to_csv(detailed_csv_path, index=False)
         print(f"Detailed data saved to: {detailed_csv_path.name}")
 
-        # ### MODIFIED ###: Adjusted threshold to be more lenient for analysis
         if len(swing_events) < 3:
             print(f"Warning: Only {len(swing_events)} swing events found. Fatigue trend analysis may be unreliable.")
-            # Still return summary data, but mark trend data as Not Applicable
             return {
                 'trial_name': self.trial_name,
                 'num_gait_cycles': len(swing_events),
@@ -389,14 +375,13 @@ def main():
         'gait_detection_signal': 'thickness_mm',  # 'thickness_mm' or 'echogenicity'
         'rest_period_s': 60,
 
-        # ### NEW ###: Advanced Gait Detection Parameters
+        # Gait Detection Parameters
         # --- How to Tune These Parameters ---
         # - If you are getting too few peaks (missing gait cycles):
         #   - Try DECREASING 'peak_min_height_std_factor' or 'peak_prominence_std_factor'.
         # - If you are still getting too many false peaks (from noise):
         #   - Try INCREASING 'peak_prominence_std_factor' or 'peak_min_distance_s'.
         #   - Try DECREASING 'filter_cutoff_hz' to smooth the signal more.
-        # - Use the '_gait_detection_debug.png' plot to visualize your changes.
 
         # Low-pass filter cutoff frequency in Hz. Lower values mean more smoothing.
         # Good for removing jitter in slow walking. Typical human motion is < 10 Hz.
