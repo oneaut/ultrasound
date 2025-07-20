@@ -1,9 +1,8 @@
 % =========================================================================
 
 % Description:
-% - v3.7: Implemented normalized GRF for robust gait detection, using a
-%   relative threshold instead of a fixed absolute one.
-% - v3.6: Fixed variable naming bug in plotting functions.
+% - v3.7: Implemented normalized GRF for rgait detection using a
+%   relative threshold.
 %
 % REQUIRES: Statistics and Machine Learning Toolbox, Signal Processing Toolbox
 % =========================================================================
@@ -13,7 +12,7 @@ clear; clc; close all;
 baseDataDir = 'Z:\AnkleStudy\participantData\unassistedTreadmillWalking\20602_Sub10_5June';
 outputDir = 'C:\Users\msingh25\Desktop\github_gpu\us_processing_for_neuromuscularsys\matlab_processed_results';
 
-% --- NEW: Using a normalized threshold for GRF ---
+% --- Normalized threshold for GRF ---
 % This value is relative (0-1). 0.15 means 15% of the peak force.
 config.grf_stance_threshold_norm = 0.25; 
 
@@ -256,7 +255,6 @@ function plotNormalizedActivation(dataTable, emgLabels, config, outputDir, trial
     fprintf('Activation plots saved.\n');
 end
 
-% ... All other helper functions (runComparativeSynergyAnalysis, performNMF, etc.) ...
 function runComparativeSynergyAnalysis(emgMatrix, emgLabels, time, fs, outputDir, trialName, vafThreshold)
     fprintf('\n--- Running Comparative Synergy Analysis ---\n');
     emgMatrixNorm = emgMatrix ./ max(emgMatrix, [], 1);
