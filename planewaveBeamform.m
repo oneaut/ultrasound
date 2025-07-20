@@ -1,10 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Mayank Singh
 % 12 October 2023
-% Planewave beamforming
+% PLANWAVEBEAMFORM GPU‑planewave beamforming
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [envOut, rfData, lat, axial] = planewaveBeamform(rawData, lat, axial, fnum, pitch, apotype)
-%PLANWAVEBEAMFORM GPU‑accelerated planewave beamforming
 %
 % Inputs:
 %   rawData : [nSamples × nElements] RF data
