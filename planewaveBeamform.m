@@ -19,7 +19,7 @@ function [envOut, rfData, lat, axial] = planewaveBeamform(rawData, lat, axial, f
 %   rfData  : beamformed RF data
 %   lat, axial returned (gathered back if GPU used)
 
-%% — Move everything onto GPU if available
+%% — Move everything onto GPU if avaiable
 if gpuDeviceCount > 0
     rawData = gpuArray(rawData);
     lat     = gpuArray(lat);
