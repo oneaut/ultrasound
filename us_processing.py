@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 """
-
-=====================================================
 
 - **Gait Detection:** Implements a low-pass filter and peak detection thresholds (height, prominence) to eliminate false
   positives caused by noise.
