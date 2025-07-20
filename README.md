@@ -1,6 +1,6 @@
 # Ultrasound Imaging for Gait Analysis
 
-A collection of MATLAB and Python scripts to beamform raw PSRF ultrasound data, extract image‐based features (speckle‐tracking, strain, intensity), and perform gait analysis on unassisted treadmill walking trials. This toolbox supports both CPU and GPU workflows and includes robust processing pipelines for real‑time and offline analysis.
+Scripts to beamform raw PSRF ultrasound data, extract image‐based features (speckle‐tracking, strain, intensity), and perform gait analysis on unassisted treadmill walking trials. Supports both CPU and GPU workflows and includes US processing pipelines for real‑time and offline analysis.
 
 ---
 
