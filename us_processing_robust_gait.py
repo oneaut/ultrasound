@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 ================================================================================
-Ultrasound Fatigue Analysis - v9.0 (Robust Gait Detection)
+Ultrasound Fatigue Analysis
 ================================================================================
-Author: Gemini AI
-Date: 2025-06-30
+Author: Mayank Singh
+Date: 
 
-Version 9.0 Enhancements:
-- ROBUST GAIT DETECTION: Implements a superior gait detection method by finding
-  prominent valleys (muscle contractions) instead of peaks. This is much more
+first push:
+- GAIT DETECTION: Implements a gait detection method by finding
+  prominent valleys (muscle contractions) instead of peaks. This shows higher correlation, and more
   reliable across different subjects and signal conditions.
-- NEW MUSCLE ACTIVATION PLOT: Generates a time-normalized plot showing the
-  average muscle activation pattern across all gait cycles in a trial.
-- ENHANCED DEBUG PLOT: The gait detection debug plot is now clearer, showing
-  the inverted signal used for valley detection with a dual y-axis for context.
-- REFINED TUNING: Configuration is updated to prioritize the 'prominence'
-  parameter, the most effective way to tune the new detection algorithm.
+- MUSCLE ACTIVATION PLOT: Generates a time-normalized plot for
+  normalized muscle activation across all gait cycles in a trial.
+- Swing phase detection plot: The gait detection for swing phase.
+- TUNING: you configure any parameter in peak finding. Configuration is updated to choose the 'prominence'
+  paramter here.
 ================================================================================
 """
 import cv2
@@ -33,7 +32,7 @@ import re
 
 class UltrasoundTrialAnalyzer:
     """
-    A class to encapsulate all analysis steps for a single ultrasound trial from JPG images.
+
     """
 
     def __init__(self, trial_path: Path, config: dict):
@@ -67,7 +66,7 @@ class UltrasoundTrialAnalyzer:
         return roi
 
     def process_images(self, roi: tuple):
-        """Processes all images in the trial folder to extract time-series data."""
+        """Processes all images to extract time-series data."""
         image_files = sorted(self.trial_path.glob('*.jpg'), key=lambda p: int(re.search(r'(\d+)', p.name).group(1)))
 
         if not image_files:
@@ -101,14 +100,13 @@ class UltrasoundTrialAnalyzer:
         return True
 
     def _calculate_muscle_thickness(self, roi_image: np.ndarray) -> float:
-        """Calculates vertical muscle thickness from a cropped ROI image."""
+        """Calculates vertical muscle thickness from ROI in an image."""
         blurred_img = cv2.GaussianBlur(roi_image, (5, 5), 0)
         edges = cv2.Canny(blurred_img, 50, 150)
         width = edges.shape[1]
         center_start, center_end = int(width * 0.25), int(width * 0.75)
         central_column_edges = edges[:, center_start:center_end]
 
-        # Use percentile-based approach for robustness to noise
         edge_points_y, _ = np.where(central_column_edges > 0)
         if edge_points_y.size < 10: return np.nan
 
@@ -121,7 +119,7 @@ class UltrasoundTrialAnalyzer:
     def identify_gait_events(self):
         """
         Identifies gait events by finding prominent valleys (muscle contractions)
-        in the thickness signal. This version is more robust to baseline drift and noise.
+        in the thickness signal.
         """
         signal_col = self.config['gait_detection_signal']
         raw_signal = self.results_df[signal_col].values
@@ -142,7 +140,7 @@ class UltrasoundTrialAnalyzer:
         # Invert the signal to find valleys (contractions) as peaks
         inverted_signal = -filtered_signal
 
-        # Use prominence as the main detection criterion for robustness
+        # Use prominence as the main detection criterio
         signal_std = np.nanstd(inverted_signal)
         min_peak_prominence = self.config['peak_prominence_std_factor'] * signal_std
         min_peak_height = np.nanmean(inverted_signal)  # A generous height threshold
@@ -195,7 +193,6 @@ class UltrasoundTrialAnalyzer:
         ax.legend(loc='upper left')
         ax.grid(True)
         ax.set_xlim(0, time_axis.max())
-        # Invert y-axis to make valleys appear as peaks, which is intuitive
         ax.invert_yaxis()
 
         plt.tight_layout()
@@ -204,7 +201,6 @@ class UltrasoundTrialAnalyzer:
         plt.close(fig)
 
     def run_fatigue_analysis(self):
-        """Calculates fatigue metrics and generates all plots and data files."""
         # --- Intra-trial Normalization (Overall) ---
         min_thick_overall = self.results_df['thickness_mm'].min()
         max_thick_overall = self.results_df['thickness_mm'].max()
@@ -218,7 +214,7 @@ class UltrasoundTrialAnalyzer:
 
         self._plot_time_series('thickness_mm', 'Muscle Thickness Over Time', 'Thickness (mm)')
 
-        # --- NEW: Generate Muscle Activation Plot ---
+        # --- Muscle Activation Plot ---
         self._plot_muscle_activation()
         print("Muscle activation plot saved.")
 
@@ -251,8 +247,7 @@ class UltrasoundTrialAnalyzer:
 
     def _plot_muscle_activation(self):
         """
-        Generates a plot of the average, time-normalized muscle activation
-        pattern across all gait cycles in the trial.
+        Generates a plot of the average, time-normalized muscle activation.
         """
         gait_cycles = self.results_df[self.results_df['gait_cycle'] > 0]
         if gait_cycles.empty:
@@ -261,7 +256,7 @@ class UltrasoundTrialAnalyzer:
         num_cycles = int(gait_cycles['gait_cycle'].max())
         resampled_cycles = []
 
-        # Normalize each cycle to 101 points (0-100%)
+        # Normalize each cycle
         norm_time = np.linspace(0, 100, 101)
 
         for i in range(1, num_cycles + 1):
@@ -276,11 +271,11 @@ class UltrasoundTrialAnalyzer:
                 fill_value='extrapolate'
             )
 
-            # Time-normalize the cycle's time axis
+            # time-normalize
             cycle_norm_time = (cycle_df['time_s'] - cycle_df['time_s'].iloc[0]) / (
                         cycle_df['time_s'].iloc[-1] - cycle_df['time_s'].iloc[0]) * 100
 
-            # Re-create the interpolation function with the normalized time
+            # Re-create the interpolation function
             interp_func_norm = interp1d(
                 cycle_norm_time,
                 cycle_df['norm_thick_intra_overall'],
@@ -300,11 +295,11 @@ class UltrasoundTrialAnalyzer:
         plt.style.use('seaborn-v0_8-whitegrid')
         fig, ax = plt.subplots(figsize=(12, 7))
 
-        # Plot individual cycles faintly
+        # plot individual cycles
         for cycle_data in all_cycles_matrix:
             ax.plot(norm_time, cycle_data, color='gray', alpha=0.2)
 
-        # Plot the mean and std deviation
+        # mean and std deviation
         ax.plot(norm_time, mean_activation, color='red', linewidth=2.5, label='Mean Activation')
         ax.fill_between(norm_time, mean_activation - std_activation, mean_activation + std_activation,
                         color='red', alpha=0.2, label='Std. Deviation')
@@ -322,7 +317,6 @@ class UltrasoundTrialAnalyzer:
         plt.close(fig)
 
     def _calculate_gait_cycle_metrics(self):
-        # This function is simplified as some metrics are not needed for this version
         metrics = []
         gait_cycles = self.results_df[self.results_df['gait_cycle'] > 0]['gait_cycle'].unique()
         sampling_period = self.config['trial_duration_s'] / len(self.results_df)
