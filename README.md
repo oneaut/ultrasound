@@ -4,17 +4,21 @@ Scripts to beamform raw PSRF ultrasound data, extract image‐based features (sp
 
 ---
 
-## 📦 Repository Structure
+## Repository Structure
 
 .ultrasound/
-├── .idea/ # IDE/project settings (ignore)
 ├── beamforming_GPU.m # GPU‑accelerated planewave beamformer
+
 ├── planewaveBeamform.m # Core MATLAB planewave beamforming function
+
 ├── unassisted_gait_analysis.m # MATLAB script: end‑to‑end B‑mode → feature extraction → plots
+
 ├── us_psrf.py # Python reader for raw PSRF files
+
 ├── us_processing.py # Python beamforming & envelope → JPEGs & MP4
-├── us_processing_robust_gait.py # Python: robust feature extraction & basic regression
-└── README.md # (this file)
+
+├── us_processing_robust_gait.py # Python: feature extraction 
+
 
 
 ---
